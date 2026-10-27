@@ -1,0 +1,6 @@
+# DFIR Evidence — Active Sessions
+# Incident: INC-20261021-C922F5
+# Collected: 2026-10-22T12:46:10.421916
+# Result: FAILED
+
+ERROR: Command not found: [WinError 2] The system cannot find the file specified

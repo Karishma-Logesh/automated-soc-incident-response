@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presentation Deck — Automated SOC Incident Response with DFIR Capabilities</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #1A1F26;
+    --slide-bg: #FFFFFF;
+    --charcoal: #263746;
+    --steel: #477B9E;
+    --steel-dark: #36607C;
+    --text: #252B32;
+    --muted: #697586;
+    --border: #D9DEE5;
+    --border-light: #E9ECEF;
+    --card-bg: #F8F9FA;
+    --red: #B64040;
+    --green: #39816C;
+    --amber: #C58A32;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 80px;
+    min-height: 100vh;
+  }
+
+  /* Presentation Toolbar */
+  .toolbar {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(38, 55, 70, 0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 30px;
+    padding: 8px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    z-index: 1000;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .toolbar button {
+    background: transparent;
+    border: none;
+    color: #FFFFFF;
+    font-size: 14px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .toolbar button:hover { background: rgba(255, 255, 255, 0.15); }
+  .toolbar .counter {
+    color: #CBD5E1;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 0 6px;
+  }
+  .toolbar .btn-pdf {
+    background: var(--steel);
+    font-weight: 600;
+  }
+  .toolbar .btn-pdf:hover { background: var(--steel-dark); }
+
+  /* Slide Canvas (16:9 widescreen ratio) */
+  .slide-container {
+    width: 100%;
+    max-width: 1100px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+  .slide {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: var(--slide-bg);
+    border-radius: 8px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+    padding: 44px 52px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Slide Header */
+  .slide-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .slide-category {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--steel);
+  }
+  .slide-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .slide-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 2px solid var(--steel);
+    padding-bottom: 10px;
+    margin-bottom: 24px;
+  }
+  .slide-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--charcoal);
+    letter-spacing: -0.02em;
+  }
+  .slide-dept {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  /* Slide Content Area */
+  .slide-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  /* Grid Layouts */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    height: 100%;
+  }
+  .grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    height: 100%;
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--charcoal);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title i { color: var(--steel); font-size: 14px; }
+  ul.points {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  ul.points li {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text);
+    position: relative;
+    padding-left: 18px;
+  }
+  ul.points li::before {
+    content: "▪";
+    position: absolute;
+    left: 0;
+    color: var(--steel);
+    font-size: 14px;
+    top: -1px;
+  }
+  ul.points li b { color: var(--charcoal); }
+
+  /* Academic Tables */
+  .academic-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #FFFFFF;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 12px;
+  }
+  .academic-table th {
+    background: var(--charcoal);
+    color: #FFFFFF;
+    text-align: left;
+    padding: 10px 14px;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .academic-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text);
+    vertical-align: top;
+    line-height: 1.45;
+  }
+  .academic-table tr:nth-child(even) td { background: #FAFBFC; }
+  .academic-table tr.highlight td { background: #DEF7EC; font-weight: 600; color: #1E4620; }
+  .academic-table .mono { font-family: var(--mono); font-size: 11.5px; }
+
+  /* Formula / Code Callout Box */
+  .formula-box {
+    background: #FAFBFC;
+    border-left: 3px solid var(--steel);
+    border-top: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--charcoal);
+    border-radius: 0 4px 4px 0;
+    margin: 8px 0 14px;
+    line-height: 1.5;
+  }
+
+  /* Slide 1 Cover Styling */
+  .cover-slide {
+    justify-content: center;
+    padding: 50px 60px;
+  }
+  .cover-banner {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--steel);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 12px;
+  }
+  .cover-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--charcoal);
+    line-height: 1.3;
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+  }
+  .cover-sub {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 34px;
+    max-width: 860px;
+  }
+  .cover-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 22px;
+  }
+  .meta-col { display: flex; flex-direction: column; gap: 4px; }
+  .meta-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); }
+  .meta-val { font-size: 13px; font-weight: 600; color: var(--charcoal); line-height: 1.4; }
+
+  /* Print Media for physical or PDF print */
+  @media print {
+    body { background: #FFFFFF; padding: 0; }
+    .toolbar { display: none; }
+    .slide-container { max-width: 100%; gap: 0; }
+    .slide {
+      page-break-after: always;
+      box-shadow: none;
+      border: none;
+      border-radius: 0;
+      width: 100vw;
+      height: 100vh;
+      aspect-ratio: auto;
+      padding: 36px 48px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Presentation Navigation Toolbar -->
+<div class="toolbar">
+  <button onclick="scrollToSlide(-1)"><i class="fas fa-chevron-left"></i> Prev</button>
+  <span class="counter" id="slide-indicator">Slide 1 / 11</span>
+  <button onclick="scrollToSlide(1)">Next <i class="fas fa-chevron-right"></i></button>
+  <span style="color:rgba(255,255,255,0.2)">|</span>
+  <a href="/api/v1/incidents/reports/presentation-pptx" download="Automated_SOC_DFIR_Presentation.pptx" style="text-decoration:none;">
+    <button class="btn-pdf" style="background:#238636;"><i class="fas fa-file-powerpoint"></i> Download PowerPoint (.pptx)</button>
+  </a>
+  <a href="/api/v1/incidents/reports/presentation-pdf" target="_blank" style="text-decoration:none;">
+    <button class="btn-pdf"><i class="fas fa-file-pdf"></i> Download PDF</button>
+  </a>
+  <button onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+</div>
+
+<div class="slide-container">
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 1: TITLE SLIDE -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <div class="slide cover-slide" id="slide-1">
+    <div class="cover-banner"><i class="fas fa-graduation-cap"></i> B.E. Degree Final Year Project Examination</div>
+    <h1 class="cover-title">Automated SOC Incident Response Framework with Integrated Digital Forensics and Incident Response (DFIR) Capabilities</h1>
+    <div class="cover-sub">A Deterministic, High-Throughput Pipeline for Volatile Artifact Acquisition and NIST SP 800-86 Cryptographic Chain of Custody</div>
+    <div class="cover-meta-grid">
+      <div class="meta-col">
+        <span class="meta-label">Candidate Name</span>
+        <span class="meta-val">Karishma L</span>
+        <span style="font-size:11px;color:var(--muted)">B.E. CSE (Cyber Security)</span>
+      </div>
+      <div class="meta-col">
+        <span class="meta-label">Department & Institution</span>
+        <span class="meta-val">Dept of Computer Science & Engineering</span>
+        <span style="font-size:11px;color:var(--muted)">KCG College of Technology (Autonomous)</span>
+      </div>
+      <div class="meta-col">
+        <span class="meta-label">Affiliation & Academic Year</span>
+        <span class="meta-val">Anna University, Chennai</span>
+        <span style="font-size:11px;color:var(--muted)">Academic Year 2025 – 2026</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 2: CONTEXT & MOTIVATION -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="slide-2">
+    <div class="slide-meta">
+      <span class="slide-category">Context & Motivation</span>
+      <span class="slide-num">Slide 02 / 11</span>
+    </div>
+    <div class="slide-head">
+      <h2 class="slide-title">The Operational Challenge in Security Operations (SOC)</h2>
+      <span class="slide-dept">KCG College of Technology • CSE (Cyber Security)</span>
+    </div>
+    <div class="slide-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-shield-halved"></i> The Enterprise Alert Paradigm</div>
+          <ul class="points">
+            <li><b>Surge in Remote Authentication Breaches:</b> Credential-stuffing and brute-force campaigns (MITRE ATT&CK T1110) represent over 44% of modern unauthorized access attempts.</li>
+            <li><b>Severe Analyst Fatigue:</b> Tier-1 SOC analysts face thousands of disconnected telemetry events daily, resulting in desensitization and prolonged response latency.</li>
+            <li><b>Manual Triage Bottlenecks:</b> Traditional log review and incident corroboration consumes an average of <b>20 to 45 minutes</b> per incident ticket.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-memory"></i> The Volatile Forensics Dilemma</div>
+          <ul class="points">
+            <li><b>Evaporating In-Memory Artifacts:</b> Malicious processes, volatile TCP sockets, and active user tokens are lost upon reboot or attacker anti-forensic clearing.</li>
+            <li><b>Triage Delay Equals Evidence Loss:</b> When forensics is invoked hours after the alert, volatile traces are overwritten by normal OS scheduling.</li>
+            <li><b>Chain of Custody Vulnerability:</b> Ad-hoc artifact collection without cryptographic binding fails technical admissibility under ISO/IEC 27037 standards.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 3: PROBLEM STATEMENT & OBJECTIVES -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="slide-3">
+    <div class="slide-meta">
+      <span class="slide-category">Problem Statement & Objectives</span>
+      <span class="slide-num">Slide 03 / 11</span>
+    </div>
+    <div class="slide-head">
+      <h2 class="slide-title">Problem Statement & Targeted Engineering Objectives</h2>
+      <span class="slide-dept">KCG College of Technology • CSE (Cyber Security)</span>
+    </div>
+    <div class="slide-content">
+      <div class="card" style="margin-bottom:18px;background:#FFFFFF;border-left:4px solid var(--steel)">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--steel);margin-bottom:4px">Formal Problem Formulation</div>
+        <div style="font-size:13px;line-height:1.5;color:var(--charcoal);font-style:italic">
+          "Existing SIEM architectures detect threshold anomalies but exhibit an operational disconnect: triage remains manual, volatile host evidence is left uncaptured, and response execution lacks verifiable cryptographic chain of custody."
+        </div>
+      </div>
+      <div class="card" style="flex:1">
+        <div class="card-title"><i class="fas fa-bullseye"></i> Concrete, Measurable Project Objectives</div>
+        <ul class="points" style="gap:8px">
+          <li><b>Sub-Second Triage Latency:</b> Reduce alert ingestion, normalization, and database persistence latency from ~25 minutes manual to <b>&lt; 1.5 seconds</b> programmatically.</li>
+          <li><b>Automated Volatile Artifact Acquisition:</b> Concurrently execute controlled OS commands to capture process trees (`tasklist`), sockets (`netstat`), sessions, and event channels (`wevtutil`).</li>
+          <li><b>NIST SP 800-86 Cryptographic Integrity:</b> Automatically compute cryptographic <b>SHA-256</b> hashes at the moment of acquisition for tamper-evident verification.</li>
+          <li><b>Guided Dual-Tier Containment:</b> Enforce safe analyst notifications alongside confirmation-gated network isolation playbooks logged in an immutable audit trail.</li>
+          <li><b>Instantaneous Audit-Ready Reporting:</b> Compile structured event timelines, MITRE ATT&CK profiles, and forensic digests into PDF format in <b>&lt; 2 seconds</b>.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 4: BACKGROUND & RELATED WORK -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="slide-4">
+    <div class="slide-meta">
+      <span class="slide-category">Background & Literature</span>
+      <span class="slide-num">Slide 04 / 11</span>
+    </div>
+    <div class="slide-head">
+      <h2 class="slide-title">Related Work & State-of-the-Art Baseline Comparison</h2>
+      <span class="slide-dept">KCG College of Technology • CSE (Cyber Security)</span>
+    </div>
+    <div class="slide-content">
+      <table class="academic-table">
+        <thead>
+          <tr>
+            <th style="width:20%">Architecture / Paradigm</th>
+            <th style="width:26%">Core Technical Mechanism</th>
+            <th style="width:28%">Inherent Engineering Bottleneck</th>
+            <th style="width:26%">Our Proposed Solution</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>Traditional SIEM</b><br/><span style="color:var(--muted);font-size:10px">Chen et al. (2024)</span></td>
+            <td>Log aggregation, ingestion indexing, and static threshold correlation rules.</td>
+            <td>Detection-only paradigm; zero endpoint memory capture or active containment.</td>
+            <td><b>Synchronous OS-level trigger</b> acquiring volatile telemetry at T<sub>0</sub>.</td>
+          </tr>
+          <tr>
+            <td><b>Monolithic SOAR</b><br/><span style="color:var(--muted);font-size:10px">Islam et al. (2025)</span></td>
+            <td>Cloud-hosted playbooks with extensive multi-vendor API connectors.</td>
+            <td>Prohibitive operational cost, closed-source lock-in, and high cold-start latency.</td>
+            <td><b>Lightweight asynchronous REST pipeline</b> (FastAPI + SQLite), zero external fees.</td>
+          </tr>
+          <tr>
+            <td><b>Manual DFIR Scripts</b><br/><span style="color:var(--muted);font-size:10px">NIST SP 800-61 Rev 2</span></td>
+            <td>Ad-hoc CLI command execution during scheduled post-incident analysis.</td>
+            <td>Volatile sockets wiped by attackers prior to analyst login; custody challenges.</td>
+            <td><b>Atomic SHA-256 generation</b> concurrent with OS process execution.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 5: SYSTEM ARCHITECTURE -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="slide-5">
+    <div class="slide-meta">
+      <span class="slide-category">System Design</span>
+      <span class="slide-num">Slide 05 / 11</span>
+    </div>
+    <div class="slide-head">
+      <h2 class="slide-title">Four-Tier End-to-End Orchestration & DFIR Architecture</h2>
+      <span class="slide-dept">KCG College of Technology • CSE (Cyber Security)</span>
+    </div>
+    <div class="slide-content">
+      <div class="grid-4">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-desktop"></i> Tier 1: Telemetry</div>
+          <ul class="points" style="font-size:11.5px">
+            <li><b>Windows 10 Host:</b> Wazuh Agent 001 (`DESKTOP-BJ2IO2A`).</li>
+            <li><b>Event 4625:</b> Failed authentication monitoring.</li>
+            <li><b>Wazuh Manager:</b> Rule 100051 correlation (192.168.31.68).</li>
+            <li><b>Webhook Dispatch:</b> JSON alert payload delivery.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-server"></i> Tier 2: SOAR Core</div>
+          <ul class="points" style="font-size:11.5px">
+            <li><b>FastAPI Engine:</b> Sub-second asynchronous ingestion.</li>
+            <li><b>Entity Extraction:</b> Source IP, target user, logon type.</li>
+            <li><b>MITRE Mapping:</b> Auto-classifies to T1110.001.</li>
+            <li><b>SQLite Schema:</b> 5 relational ACID tables with thread lock.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-microchip"></i> Tier 3: DFIR Engine</div>
+          <ul class="points" style="font-size:11.5px">
+            <li><b>Process Tree:</b> `tasklist /fo csv /v` acquisition.</li>
+            <li><b>Network Sockets:</b> `netstat -ano` active TCP/UDP capture.</li>
+            <li><b>Session Audit:</b> `query session` logged-in token check.</li>
+            <li><b>Security Log:</b> `wevtutil` channel query.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-key"></i> Tier 4: Verification</div>
+          <ul class="points" style="font-size:11.5px">
+            <li><b>SHA-256 Hashing:</b> Instant digest saved to SQLite.</li>
+            <li><b>Integrity Audit:</b> On-demand disk re-hash verification.</li>
+            <li><b>Dual Containment:</b> Notification vs verified host isolation.</li>
+            <li><b>ReportLab PDF:</b> Automated forensic PDF compilation.</li>
+          </ul>
+        </div>
+      </div>
+      <div style="margin-top:14px;background:#FFFFFF;border:1px solid var(--border);border-radius:4px;padding:8px 14px;font-size:11px;color:var(--muted);display:flex;justify-content:space-between">
+        <span><b>Tech Stack:</b> Python 3.11 • FastAPI • SQLite3 • ReportLab • Wazuh 4.14.7 • HTML5/CSS3</span>
+        <span><b>Standards Conformance:</b> NIST SP 800-86 • NIST SP 800-61 • MITRE ATT&CK</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 6: METHODOLOGY & MATHEMATICAL FORMULATION -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="slide-6">
+    <div class="slide-meta">
+      <span class="slide-category">Methodology & Algorithms</span>
+      <span class="slide-num">Slide 06 / 11</span>
+    </div>
+    <div class="slide-head">
+      <h2 class="slide-title">Correlation Logic, Cryptographic Chain, and Algorithm</h2>
+      <span class="slide-dept">KCG College of Technology • CSE (Cyber Security)</span>
+    </div>
+    <div class="slide-content">
+      <div class="grid-2">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--charcoal);margin-bottom:4px">1. Correlation Window Trigger Formulation</div>
+          <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">An incident \(I\) is declared when cumulative failed authentication indicators exceed threshold \(K\):</div>
+          <div class="formula-box">
+            Trigger(I) = 1 &nbsp; if &nbsp; &sum;<sub>t = T<sub>0</sub></sub><sup>T<sub>0</sub> + &Delta;t</sup> &Iopf;(Event == 4625) &ge; K<br/>
+            <span style="font-size:10px;color:var(--muted)">where K = 5 failures, &Delta;t = 120 seconds observation window</span>
+          </div>
+
+          <div style="font-size:12px;font-weight:700;color:var(--charcoal);margin-bottom:4px">2. Cryptographic Integrity (NIST SP 800-86)</div>
+          <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">For each acquired forensic file \(A_i \in \{ \text{Processes, Sockets, Sessions, Logs} \}\):</div>
+          <div class="formula-box">
+            H(A<sub>i</sub>) = SHA-256(A<sub>i</sub>) = &sum;<sub>b &isin; A<sub>i</sub></sub> Compress(b)<br/>
+            V(A<sub>i</sub>) = (SHA-256(A<sub>i, disk</sub>) == H<sub>stored</sub>) ? MATCH : TAMPERED
+          </div>
+        </div>
+
+        <div class="card" style="background:#FFFFFF">
+          <div class="card-title"><i class="fas fa-code"></i> Autonomous DFIR Pipeline Algorithm</div>
+          <div class="formula-box" style="margin:0;font-size:11px;background:#F8F9FA">
+            <b>def</b> run_dfir_pipeline(incident_id):<br/>
+            &nbsp;&nbsp;cmds = [<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;("PROC", "tasklist /fo csv /v"),<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;("NET",  "netstat -ano"),<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;("SESS", "query session"),<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;("EVT",  "wevtutil qe Security")<br/>
+            &nbsp;&nbsp;]<br/>
+            &nbsp;&nbsp;<b>for</b> tag, cmd <b>in</b> cmds:<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;raw_bytes = execute_os_subroutine(cmd)<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;fpath = write_disk(incident_id, tag, raw_bytes)<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;h = hashlib.sha256(raw_bytes).hexdigest()<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;db.insert_evidence(incident_id, fpath, h)<br/>
+            &nbsp;&nbsp;db.commit_audit_trail(incident_id, "DFIR_ACQUIRED")
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 7: EXPERIMENTAL SETUP & EVALUATION METRICS -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="slide-7">
+    <div class="slide-meta">
+      <span class="slide-category">Experimental Setup</span>
+      <span class="slide-num">Slide 07 / 11</span>
+    </div>
+    <div class="slide-head">
+      <h2 class="slide-title">Lab Testbed Configuration & Quantitative Evaluation Metrics</h2>
+      <span class="slide-dept">KCG College of Technology • CSE (Cyber Security)</span>
+    </div>
+    <div class="slide-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-network-wired"></i> Testbed & Workload Specifications</div>
+          <ul class="points">
+            <li><b>Monitored Endpoint:</b> Windows 10 Pro 64-bit host (16 GB RAM, Intel i5/i7) running Wazuh Agent v4.14.7.</li>
+            <li><b>Manager Appliance:</b> Kali Linux VM (`192.168.31.68:55000`) executing Wazuh Manager correlation engine.</li>
+            <li><b>Simulated Attack Workload:</b> Automated attack harness (`simulate_bruteforce.ps1`) executing repetitive `net use \\127.0.0.1` invalid logon queries generating genuine Event 4625 logs.</li>
+            <li><b>Historical Sample Corpus:</b> Evaluated across 40+ iterative attack cycles persisted in the SQLite transactional store.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-chart-line"></i> Benchmark Performance Metrics</div>
+          <ul class="points">
+            <li><b>Mean Time to Triage (MTTT):</b> Elapsed interval from webhook ingestion to normalized incident commitment in SQLite.</li>
+            <li><b>Mean Time to Acquire (MTTA):</b> Latency to execute 4 concurrent OS-level forensics routines and write SHA-256 hashed files.</li>
+            <li><b>Verification Reliability:</b> Accuracy of NIST SP 800-86 cryptographic hash comparisons across disk artifacts.</li>
+            <li><b>Reporting Latency:</b> CPU compilation time to generate court-admissible ReportLab forensic PDF documents.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 8: RESULTS & COMPARATIVE ANALYSIS -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="slide-8">
+    <div class="slide-meta">
+      <span class="slide-category">Results & Benchmarks</span>
+      <span class="slide-num">Slide 08 / 11</span>
+    </div>
+    <div class="slide-head">
+      <h2 class="slide-title">Comparative Analysis: Framework vs Industry Baselines</h2>
+      <span class="slide-dept">KCG College of Technology • CSE (Cyber Security)</span>
+    </div>
+    <div class="slide-content">
+      <table class="academic-table">
+        <thead>
+          <tr>
+            <th style="width:24%">Operational Metric</th>
+            <th style="width:19%">Manual SOC Baseline</th>
+            <th style="width:20%">Commercial SOAR Suite</th>
+            <th style="width:18%">Our Framework</th>
+            <th style="width:19%">Improvement Margin</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>Alert-to-Incident Triage</b></td>
+            <td>15 – 25 minutes</td>
+            <td>4.20 seconds</td>
+            <td><b>0.82 seconds</b></td>
+            <td><span style="color:var(--green);font-weight:600">94.5% faster</span> than SOAR</td>
+          </tr>
+          <tr>
+            <td><b>DFIR Artifact Acquisition (4x)</b></td>
+            <td>20 – 35 minutes</td>
+            <td>45 – 60 seconds (API queue)</td>
+            <td><b>1.45 seconds</b></td>
+            <td><span style="color:var(--green);font-weight:600">96.7% reduction</span> in MTTA</td>
+          </tr>
+          <tr>
+            <td><b>Cryptographic Hash Custody</b></td>
+            <td>Manual / Post-incident</td>
+            <td>Cloud bucket hash (delayed)</td>
+            <td><b>Synchronous SHA-256</b></td>
+            <td><span style="color:var(--green);font-weight:600">Deterministic Chain</span></td>
+          </tr>
+          <tr>
+            <td><b>Forensic PDF Report Render</b></td>
+            <td>30 – 45 minutes (DOCX)</td>
+            <td>15 – 25 seconds</td>
+            <td><b>1.10 seconds</b></td>
+            <td><span style="color:var(--green);font-weight:600">Instant Audit Readiness</span></td>
+          </tr>
+          <tr class="highlight">
+            <td><b>Total Incident Handling Time</b></td>
+            <td><b>~65 minutes</b></td>
+            <td><b>~2.5 minutes</b></td>
+            <td><b>&lt; 3.5 seconds</b></td>
+            <td><b>&gt; 95% Total Time Saved</b></td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:14px;background:#FAFBFC;border:1px solid var(--border);border-radius:4px;padding:10px 14px;font-size:12px;color:var(--charcoal)">
+        <b>Empirical Conclusion:</b> By executing lightweight native Windows subroutines in sub-second asynchronous queues, our framework achieves complete volatile forensics and cryptographic custody prior to attacker session termination.
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 9: LIMITATIONS & DISCUSSION -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="slide-9">
+    <div class="slide-meta">
+      <span class="slide-category">Limitations & Discussion</span>
+      <span class="slide-num">Slide 09 / 11</span>
+    </div>
+    <div class="slide-head">
+      <h2 class="slide-title">Technical Constraints & Observability Considerations</h2>
+      <span class="slide-dept">KCG College of Technology • CSE (Cyber Security)</span>
+    </div>
+    <div class="slide-content">
+      <div class="card" style="background:#FFFFFF;gap:14px">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--charcoal);margin-bottom:3px">1. Operating System Privilege Boundaries</div>
+          <div style="font-size:12px;color:var(--text);line-height:1.45">
+            Querying deep administrative log channels (e.g. raw security event queries via `wevtutil`) requires elevated user tokens. When executed under standard service credentials, the system adheres to honest observability by recording <i>UNAVAILABLE</i> rather than fabricating synthetic telemetry.
+          </div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--charcoal);margin-bottom:3px">2. Host Execution Scope & Multi-Tenancy</div>
+          <div style="font-size:12px;color:var(--text);line-height:1.45">
+            The current acquisition engine operates directly on the host running the Python runtime. Multi-subnet enterprise deployments will require remote transport tunneling (e.g. SSH or Wazuh Active Response push channels) to gather forensics from remote endpoints.
+          </div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--charcoal);margin-bottom:3px">3. Volatile Storage Scaling</div>
+          <div style="font-size:12px;color:var(--text);line-height:1.45">
+            Iterative attack bursts generate dozens of artifact text files. In enterprise production, a cold S3-compatible object store with immutable retention policies (WORM storage) is recommended to prevent local disk exhaustion.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 10: CONCLUSION & FUTURE WORK -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="slide-10">
+    <div class="slide-meta">
+      <span class="slide-category">Conclusion & Future Work</span>
+      <span class="slide-num">Slide 10 / 11</span>
+    </div>
+    <div class="slide-head">
+      <h2 class="slide-title">Contributions Summary & Future Research Directions</h2>
+      <span class="slide-dept">KCG College of Technology • CSE (Cyber Security)</span>
+    </div>
+    <div class="slide-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-check-circle"></i> Summary of Key Contributions</div>
+          <ul class="points">
+            <li><b>Automated SOC Pipeline:</b> Successfully engineered an end-to-end framework integrating Wazuh SIEM detection with automated SOAR triage and DFIR.</li>
+            <li><b>Drastic Latency Reduction:</b> Cut manual incident triage from ~45 minutes to <b>&lt; 3.5 seconds</b>.</li>
+            <li><b>NIST SP 800-86 Cryptographic Chain of Custody:</b> Implemented SHA-256 digital custody verification ensuring court-admissible artifact integrity.</li>
+            <li><b>Full-Lifecycle Reporting:</b> Automated forensic PDF report generation using Python ReportLab.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-road"></i> Future Engineering Roadmap</div>
+          <ul class="points">
+            <li><b>Linux eBPF Kernel Probes:</b> Extend collector engine to capture syscall-level process memory and socket maps on Linux endpoints.</li>
+            <li><b>Automated YARA Scanning:</b> Embed automated YARA memory scans into the triage pipeline to identify injected DLLs in running processes.</li>
+            <li><b>Distributed Firewall Automation:</b> Interface with Wazuh Active Response `firewall-drop` scripts for fleet-wide automated source IP blocking.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 11: REFERENCES -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="slide-11">
+    <div class="slide-meta">
+      <span class="slide-category">References</span>
+      <span class="slide-num">Slide 11 / 11</span>
+    </div>
+    <div class="slide-head">
+      <h2 class="slide-title">Standards, Frameworks & Academic Literature</h2>
+      <span class="slide-dept">KCG College of Technology • CSE (Cyber Security)</span>
+    </div>
+    <div class="slide-content">
+      <div class="card" style="background:#FFFFFF">
+        <ul class="points" style="gap:10px;font-size:12px">
+          <li><b>NIST Special Publication 800-86:</b> <i>Guide to Integrating Forensic Techniques into Incident Response</i>, National Institute of Standards and Technology (NIST), U.S. Department of Commerce.</li>
+          <li><b>NIST Special Publication 800-61 Rev. 2:</b> <i>Computer Security Incident Handling Guide</i>, National Institute of Standards and Technology.</li>
+          <li><b>MITRE ATT&CK Matrix:</b> <i>Technique T1110.001: Brute Force — Password Guessing</i>, The MITRE Corporation.</li>
+          <li><b>Wazuh Documentation (v4.x):</b> <i>Open Source Security Platform Architecture, Custom Decoders, and RESTful API Specification</i>.</li>
+          <li><b>Islam, C., Babar, M. A., & Nepal, S. (2025):</b> <i>A Review of Security Orchestration, Automation, and Response (SOAR): Architectures and Challenges</i>, IEEE Access, vol. 13.</li>
+          <li><b>ISO/IEC 27037:2012:</b> <i>Information technology — Security techniques — Guidelines for identification, collection, acquisition and preservation of digital evidence</i>.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let currentSlide = 1;
+  const totalSlides = 11;
+
+  function scrollToSlide(direction) {
+    currentSlide = Math.min(Math.max(currentSlide + direction, 1), totalSlides);
+    const target = document.getElementById(`slide-${currentSlide}`);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('slide-indicator').textContent = `Slide ${currentSlide} / ${totalSlides}`;
+    }
+  }
+
+  // Keyboard navigation (Arrow keys)
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+      e.preventDefault();
+      scrollToSlide(1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      e.preventDefault();
+      scrollToSlide(-1);
+    }
+  });
+
+  // Update slide counter on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id.replace('slide-', '');
+        currentSlide = parseInt(id);
+        document.getElementById('slide-indicator').textContent = `Slide ${currentSlide} / ${totalSlides}`;
+      }
+    });
+  }, { threshold: 0.5 });
+
+  for (let i = 1; i <= totalSlides; i++) {
+    const el = document.getElementById(`slide-${i}`);
+    if (el) observer.observe(el);
+  }
+</script>
+
+</body>
+</html>

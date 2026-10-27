@@ -1,0 +1,4 @@
+# DFIR Evidence — Processes FAILED
+# Incident: INC-20261021-80CAD5
+# Collected: 2026-10-21T17:39:14.602458
+# Error: Command timed out

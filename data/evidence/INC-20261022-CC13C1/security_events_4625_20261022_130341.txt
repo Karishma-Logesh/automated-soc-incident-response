@@ -1,0 +1,10 @@
+# DFIR Evidence — Security Events FAILED
+# Incident: INC-20261022-CC13C1
+# Collected: 2026-10-22T13:03:41.386917
+# Event ID: 4625
+# Error: Access is denied.
+
+Failed to open event query.
+Access is denied.
+
+# Note: 'wevtutil qe Security' requires administrator privileges on Windows.
